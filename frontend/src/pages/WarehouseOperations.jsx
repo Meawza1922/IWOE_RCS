@@ -152,7 +152,7 @@ export default function WarehouseOperations() {
         </div>
 
         <p>
-          Inbound adds contents to a basket.
+          Inbound adds contents to a load.
           Outbound reserves stock until picking is confirmed.
           Deduct Stock is a direct adjustment.
         </p>
@@ -193,7 +193,7 @@ export default function WarehouseOperations() {
             onChange={(event) =>
               setSearch(event.target.value)
             }
-            placeholder="SKU, basket, location or reference"
+            placeholder="SKU, load, location or reference"
           />
         </label>
 
@@ -202,7 +202,7 @@ export default function WarehouseOperations() {
             <thead>
               <tr>
                 <th>Operation / created</th>
-                <th>Location / basket</th>
+                <th>Location / load</th>
                 <th>Product</th>
                 <th>Quantity</th>
                 <th>Status</th>

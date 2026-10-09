@@ -1,8 +1,4 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   getRcsBridgeBaseUrl,
@@ -17,125 +13,202 @@ import {
 
 import "../styles/OverviewSettings.css";
 
-export default function Settings() {
-  const [draft, setDraft] = useState(loadPreferences);
-  const [message, setMessage] = useState("");
-  const [bridge, setBridge] = useState(null);
+const initialCheck = {
+  state: "idle",
+  message: "Not checked",
+  time: "",
+};
 
-  const [bridgeMessage, setBridgeMessage] = useState(
-    "Not checked",
+const labels = {
+  idle: "Not checked",
+  checking: "Checking…",
+  success: "Responded",
+  error: "Check failed",
+};
+
+function CheckResult({ result }) {
+  return (
+    <div
+      className="settings-result"
+      role="status"
+      aria-live="polite"
+    >
+      <span className={`settings-badge ${result.state}`}>
+        {labels[result.state]}
+      </span>
+
+      <p>{result.message}</p>
+
+      {result.time && (
+        <small>Last checked: {result.time}</small>
+      )}
+    </div>
   );
+}
+
+export default function Settings() {
+  const [saved, setSaved] = useState(loadPreferences);
+  const [draft, setDraft] = useState(() => ({ ...saved }));
+  const [notice, setNotice] = useState(null);
+
+  const [bridge, setBridge] = useState(null);
+  const [backendResult, setBackendResult] =
+    useState(initialCheck);
+  const [rcsResult, setRcsResult] =
+    useState(initialCheck);
 
   const [robotCode, setRobotCode] = useState("30964");
-
-  const [rcsMessage, setRcsMessage] = useState(
-    "Not checked",
-  );
-
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState("");
   const controllerRef = useRef(null);
+
+  const dirty =
+    draft.warehouseName !== saved.warehouseName ||
+    draft.defaultPriority !== saved.defaultPriority;
 
   useEffect(() => {
     return () => {
       controllerRef.current?.abort();
+      controllerRef.current = null;
     };
   }, []);
+
+  function update(field, value) {
+    setDraft((current) => ({
+      ...current,
+      [field]: value,
+    }));
+
+    setNotice(null);
+  }
 
   function save(event) {
     event.preventDefault();
 
     try {
-      if (!draft.warehouseName.trim()) {
-        throw new Error("Enter a warehouse name.");
-      }
-
       const value = {
         warehouseName: draft.warehouseName.trim(),
         defaultPriority: Number(draft.defaultPriority),
       };
 
+      if (!value.warehouseName) {
+        throw new Error("Enter a warehouse name.");
+      }
+
+      if (
+        ![30, 60, 90, 120].includes(value.defaultPriority)
+      ) {
+        throw new Error("Select a valid priority.");
+      }
+
       localStorage.setItem(
         PREFERENCES_KEY,
-        JSON.stringify(value),
+        JSON.stringify(value)
       );
 
       window.dispatchEvent(
-        new CustomEvent("wms-preferences-changed"),
+        new CustomEvent("wms-preferences-changed")
       );
 
-      setMessage(
-        "Saved. The default priority applies when opening a new transfer form. Existing tasks are unchanged.",
-      );
+      setSaved(value);
+      setDraft(value);
+
+      setNotice({
+        error: false,
+        text: "Preferences saved. The default priority applies to new transfer forms.",
+      });
     } catch (error) {
-      setMessage(error.message);
+      setNotice({
+        error: true,
+        text: error.message,
+      });
     }
   }
 
-  async function check(realRcs = false) {
-    if (controllerRef.current) {
-      return;
-    }
+  async function check(kind) {
+    if (controllerRef.current) return;
 
     const request = new AbortController();
 
+    const setResult =
+      kind === "rcs"
+        ? setRcsResult
+        : setBackendResult;
+
     controllerRef.current = request;
-    setBusy(true);
+    setBusy(kind);
+
+    setResult({
+      state: "checking",
+      message: "Waiting for a response…",
+      time: "",
+    });
+
+    if (kind === "backend") {
+      setBridge(null);
+    }
 
     const timer = window.setTimeout(
       () => request.abort(),
-      35000,
+      35000
     );
 
     try {
-      if (realRcs) {
-        setRcsMessage("Checking robot response…");
+      let message;
 
+      if (kind === "rcs") {
         await checkRcsConnection(robotCode, {
           signal: request.signal,
         });
 
-        setRcsMessage(
-          `RCS responded to robot ${robotCode.trim()} query at ${new Date().toLocaleTimeString()}.`,
-        );
+        message =
+          `RCS responded to the query for robot ${robotCode.trim()}. ` +
+          "This does not confirm that the robot is online or ready to move.";
       } else {
-        setBridge(null);
-        setBridgeMessage("Checking backend…");
-
         const status = await getRcsBridgeStatus({
           signal: request.signal,
         });
 
         if (status.ok !== true) {
-          throw new Error(
-            "Unexpected backend response.",
-          );
+          throw new Error("Unexpected backend response.");
         }
+
+        if (controllerRef.current !== request) return;
 
         setBridge(status);
 
-        setBridgeMessage(
-          `Backend responded at ${new Date().toLocaleTimeString()}.`,
-        );
+        message =
+          "Backend responded. Check RCS separately to verify its connection.";
+      }
+
+      if (controllerRef.current === request) {
+        setResult({
+          state: "success",
+          message,
+          time: new Date().toLocaleString(),
+        });
       }
     } catch (error) {
-      const text = request.signal.aborted
-        ? "Check timed out or was cancelled."
-        : error.message;
-
-      if (realRcs) {
-        setRcsMessage(text);
-      } else {
-        setBridgeMessage(text);
+      if (controllerRef.current === request) {
+        setResult({
+          state: "error",
+          message: request.signal.aborted
+            ? "Check timed out or was cancelled."
+            : error.message,
+          time: new Date().toLocaleString(),
+        });
       }
     } finally {
       window.clearTimeout(timer);
-      controllerRef.current = null;
-      setBusy(false);
+
+      if (controllerRef.current === request) {
+        controllerRef.current = null;
+        setBusy("");
+      }
     }
   }
 
   return (
-    <div className="page wms-overview">
+    <div className="page wms-overview settings-page">
       <div className="page-header">
         <div>
           <span className="page-label">
@@ -145,19 +218,28 @@ export default function Settings() {
           <h2>Settings</h2>
 
           <p>
-            Warehouse preferences and connection checks.
+            Manage warehouse preferences and check connections.
           </p>
         </div>
       </div>
 
       <div className="overview-columns">
         <section className="panel overview-section">
-          <h3>Warehouse preferences</h3>
+          <div className="overview-heading">
+            <h3>Warehouse preferences</h3>
 
-          <form
-            className="overview-form"
-            onSubmit={save}
-          >
+            <span
+              className={`settings-badge ${
+                dirty ? "pending" : "idle"
+              }`}
+            >
+              {dirty
+                ? "Unsaved changes"
+                : "No pending changes"}
+            </span>
+          </div>
+
+          <form className="overview-form" onSubmit={save}>
             <label>
               Warehouse name
 
@@ -166,10 +248,7 @@ export default function Settings() {
                 maxLength={100}
                 value={draft.warehouseName}
                 onChange={(event) =>
-                  setDraft({
-                    ...draft,
-                    warehouseName: event.target.value,
-                  })
+                  update("warehouseName", event.target.value)
                 }
               />
             </label>
@@ -180,11 +259,10 @@ export default function Settings() {
               <select
                 value={draft.defaultPriority}
                 onChange={(event) =>
-                  setDraft({
-                    ...draft,
-                    defaultPriority:
-                      Number(event.target.value),
-                  })
+                  update(
+                    "defaultPriority",
+                    Number(event.target.value)
+                  )
                 }
               >
                 <option value={30}>Low</option>
@@ -195,29 +273,56 @@ export default function Settings() {
             </label>
 
             <p>
-              Saved for this browser. You can override
-              priority for each transfer in Monitor.
+              Saved in this browser. You can choose a
+              different priority for each transfer in Monitor.
             </p>
 
-            <button className="primary-button">
-              Save preferences
-            </button>
+            <div className="overview-actions">
+              <button
+                type="submit"
+                className="primary-button"
+                disabled={!dirty}
+              >
+                Save preferences
+              </button>
 
-            <p role="status">{message}</p>
+              <button
+                type="button"
+                className="settings-secondary"
+                disabled={!dirty}
+                onClick={() => {
+                  setDraft({ ...saved });
+                  setNotice(null);
+                }}
+              >
+                Discard changes
+              </button>
+            </div>
+
+            {notice && (
+              <p role={notice.error ? "alert" : "status"}>
+                {notice.text}
+              </p>
+            )}
           </form>
         </section>
 
         <section className="panel overview-section">
-          <h3>Storage and queue rules</h3>
+          <h3>Storage information</h3>
 
           <dl className="overview-facts">
             <div>
-              <dt>Location capacity</dt>
-              <dd>1 basket per point</dd>
+              <dt>Load types</dt>
+              <dd>Basket / Pallet / Rack</dd>
             </div>
 
             <div>
-              <dt>Basket contents</dt>
+              <dt>Location capacity</dt>
+              <dd>1 load per point</dd>
+            </div>
+
+            <div>
+              <dt>Load contents</dt>
               <dd>Multiple products and quantities</dd>
             </div>
 
@@ -233,46 +338,32 @@ export default function Settings() {
           </dl>
 
           <p>
-            Keep one WMS tab open for automatic dispatch.
-            Warehouse layout and basket contents are
-            managed in Monitor.
+            Manage warehouse layout and load contents in
+            Monitor. Keep one WMS tab open for automatic dispatch.
           </p>
         </section>
       </div>
 
-      <section className="panel overview-section">
-        <h3>FastAPI backend and HIK RCS</h3>
-
-        <div className="overview-form">
-          <label>
-            Backend API URL
-
-            <input
-              readOnly
-              value={getRcsBridgeBaseUrl()}
-            />
-          </label>
+      <div className="overview-columns">
+        <section className="panel overview-section">
+          <h3>Backend connection</h3>
 
           <p>
-            By default, the website forwards API requests
-            to FastAPI through the web server.
-            VITE_RCS_BRIDGE_URL can override this address.
-            Change it in the frontend environment
-            configuration and restart Vite.
-            HIK credentials and server settings remain
-            in the backend configuration.
+            Check whether the warehouse backend responds.
           </p>
 
           <button
             type="button"
             className="primary-button"
-            disabled={busy}
-            onClick={() => check(false)}
+            disabled={Boolean(busy)}
+            onClick={() => check("backend")}
           >
-            Check backend
+            {busy === "backend"
+              ? "Checking backend…"
+              : "Check backend"}
           </button>
 
-          <p role="status">{bridgeMessage}</p>
+          <CheckResult result={backendResult} />
 
           {bridge && (
             <dl className="overview-facts">
@@ -287,46 +378,76 @@ export default function Settings() {
                   {bridge.hikConfigured ? "Yes" : "No"}
                 </dd>
               </div>
-
-              <div>
-                <dt>Backend task database</dt>
-                <dd>{bridge.database || "Unknown"}</dd>
-              </div>
             </dl>
           )}
 
-          <label>
-            Robot code for connection check
+          <details className="settings-details">
+            <summary>Connection configuration</summary>
 
-            <input
-              value={robotCode}
-              disabled={busy}
-              onChange={(event) => {
-                setRobotCode(event.target.value);
-                setRcsMessage("Not checked");
-              }}
-            />
-          </label>
+            <div className="overview-form">
+              <label>
+                Backend API URL
 
-          <button
-            type="button"
-            className="primary-button"
-            disabled={busy || !robotCode.trim()}
-            onClick={() => check(true)}
-          >
-            Check RCS connection
-          </button>
+                <input
+                  readOnly
+                  value={getRcsBridgeBaseUrl()}
+                />
+              </label>
+            </div>
 
-          <p role="status">{rcsMessage}</p>
+            <p>
+              The frontend environment setting
+              VITE_RCS_BRIDGE_URL can override this address.
+              Restart Vite after changing it. HIK server
+              settings and credentials are configured in
+              the backend.
+            </p>
+
+            {bridge && (
+              <p>
+                Task database: {bridge.database || "Unknown"}
+              </p>
+            )}
+          </details>
+        </section>
+
+        <section className="panel overview-section">
+          <h3>RCS connection</h3>
 
           <p>
-            This checks a robot query only.
-            It does not submit movement tasks.
-            A backend response alone does not confirm
-            an RCS connection.
+            Check the RCS response using a robot query.
+            This check does not submit a movement task.
           </p>
-        </div>
-      </section>
+
+          <div className="overview-form">
+            <label>
+              Robot code
+
+              <input
+                value={robotCode}
+                disabled={Boolean(busy)}
+                onChange={(event) => {
+                  setRobotCode(event.target.value);
+                  setRcsResult(initialCheck);
+                }}
+              />
+            </label>
+
+            <button
+              type="button"
+              className="primary-button"
+              disabled={Boolean(busy) || !robotCode.trim()}
+              onClick={() => check("rcs")}
+            >
+              {busy === "rcs"
+                ? "Checking RCS…"
+                : "Check RCS connection"}
+            </button>
+          </div>
+
+          <CheckResult result={rcsResult} />
+        </section>
+      </div>
     </div>
   );
 }

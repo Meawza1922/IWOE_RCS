@@ -296,3 +296,94 @@
     flex-wrap: wrap;
   }
 }
+
+/* Settings */
+
+.settings-page .overview-columns {
+  align-items: start;
+}
+
+.settings-page .overview-heading {
+  flex-wrap: wrap;
+}
+
+.settings-page .settings-badge {
+  display: inline-block;
+  padding: 5px 10px;
+  border: 1px solid #405570;
+  border-radius: 999px;
+  font-size: 12px;
+  color: #cbd5e1;
+}
+
+.settings-page .settings-badge.success {
+  color: #6ee7b7;
+  border-color: #28745b;
+  background: #12352d;
+}
+
+.settings-page .settings-badge.error {
+  color: #fda4af;
+  border-color: #9f4252;
+  background: #391d29;
+}
+
+.settings-page .settings-badge.pending {
+  color: #fde68a;
+  border-color: #856a2b;
+  background: #342d19;
+}
+
+.settings-page .settings-badge.checking {
+  color: #67e8f9;
+  border-color: #26788b;
+  background: #10333f;
+}
+
+.settings-page .settings-result {
+  margin-top: 18px;
+  overflow-wrap: anywhere;
+}
+
+.settings-page .settings-result small {
+  color: #a7bad0;
+}
+
+.settings-page .settings-secondary {
+  background: #142238;
+  color: #e2e8f0;
+  border: 1px solid #405570;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.settings-page button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.settings-page .settings-details {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #21334b;
+  overflow-wrap: anywhere;
+}
+
+.settings-page .settings-details summary {
+  color: #67e8f9;
+  cursor: pointer;
+  margin-bottom: 16px;
+}
+
+.settings-page :focus-visible {
+  outline: 2px solid #22d3ee;
+  outline-offset: 3px;
+}
+
+.settings-page .overview-facts dt,
+.settings-page .overview-facts dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}

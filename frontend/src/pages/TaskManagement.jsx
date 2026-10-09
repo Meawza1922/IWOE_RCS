@@ -147,7 +147,7 @@ export default function TaskManagement() {
           <h2>Task Management</h2>
 
           <p>
-            Overview of picking work and basket transfers.
+            Overview of picking work and load transfers.
             Manage each task in its operation page.
           </p>
         </div>
@@ -203,7 +203,7 @@ export default function TaskManagement() {
               </option>
 
               <option value="BASKET_TRANSFER">
-                Basket transfers
+                Load transfers
               </option>
             </select>
           </label>
@@ -216,7 +216,7 @@ export default function TaskManagement() {
               onChange={(event) =>
                 setSearch(event.target.value)
               }
-              placeholder="Task, basket, SKU or location"
+              placeholder="Task, load, SKU or location"
             />
           </label>
         </div>
@@ -227,7 +227,7 @@ export default function TaskManagement() {
               <tr>
                 <th>Task</th>
                 <th>Type</th>
-                <th>Basket / product</th>
+                <th>Load / product</th>
                 <th>From → To</th>
                 <th>Status</th>
                 <th>Open</th>

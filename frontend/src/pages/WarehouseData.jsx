@@ -600,7 +600,7 @@ function LocationTable({ rows }) {
             <th>Level</th>
             <th>Inventory</th>
             <th>Qty</th>
-            <th>Basket / Capacity</th>
+            <th>Load / Capacity</th>
             <th>Status</th>
           </tr>
         </thead>
@@ -691,8 +691,7 @@ function LocationTable({ rows }) {
                   <div className="warehouse-data-capacity">
                     <div>
                       <span>
-                        {row.basket?.id ||
-                          "No basket"}
+                        {row.basket?.id || "No load"}
                         {" · "}
                         {used}
                       </span>
