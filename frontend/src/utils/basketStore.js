@@ -325,33 +325,42 @@ export function reviewStoppedTransferAtSource(
   return review;
 }
 
-export function isReserved(id, except = "") {
-  const data = readMonitor();
+export function isReserved(
+  id,
+  except = "",
+  data = readMonitor(),
+  queue = readQueue()
+) {
   const locations = shelvesOf(data);
   const completed = data.completedBasketTransfers || {};
 
-  return readQueue().some((task) => {
+  return queue.some((task) => {
     if (task.id === except) {
       return false;
     }
 
-    // Release only the reviewed task's reservation.
+    // Release the reservation after a stopped task
+    // has been reviewed.
     if (isStoppedTransferReviewed(task, data)) {
       return false;
     }
 
     if (task.rcsStatus === "COMPLETED") {
-      const key = task.rcsTaskChainCode || task.bridgeTaskId;
+      const key =
+        task.rcsTaskChainCode || task.bridgeTaskId;
 
       if (
         key &&
-        Object.prototype.hasOwnProperty.call(completed, key)
+        Object.prototype.hasOwnProperty.call(
+          completed,
+          key
+        )
       ) {
         return false;
       }
 
-      // A completed robot task keeps its reservation
-      // until the warehouse update has been committed.
+      // Keep the reservation until the completed
+      // transfer has updated the warehouse data.
     }
 
     return [
@@ -360,7 +369,7 @@ export function isReserved(id, except = "") {
     ]
       .filter(Boolean)
       .some((pointId) =>
-        laneIds(locations, pointId).includes(id),
+        laneIds(locations, pointId).includes(id)
       );
   });
 }
