@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { MONITOR_KEY } from "../utils/basketStore";
+
 import {
   loadPreferences,
   summarizeWarehouse,
@@ -215,43 +216,51 @@ export default function Dashboard() {
                 </p>
               )}
 
-              {visibleStorage.map((rack) => (
-                <div
-                  className="overview-rack"
-                  key={rack.id}
-                >
-                  <div>
-                    <strong>
-                      {rack.name || rack.id}
+              <div
+                className="dashboard-storage-list"
+                role="region"
+                aria-label="Storage occupancy list"
+                tabIndex={0}
+              >
+                {visibleStorage.map((rack) => (
+                  <div
+                    className="overview-rack"
+                    key={rack.id}
+                    data-load-type={rack.type}
+                  >
+                    <div>
+                      <strong>
+                        {rack.name || rack.id}
 
-                      <small className="dashboard-type">
-                        {rack.type}
-                      </small>
-                    </strong>
+                        <small className="dashboard-type">
+                          {rack.type}
+                        </small>
+                      </strong>
 
-                    <span>
-                      {rack.occupied}
-                      {" / "}
-                      {rack.total}
-                      {" occupied points"}
-                    </span>
+                      <span>
+                        {rack.occupied}
+                        {" / "}
+                        {rack.total}
+                        {" occupied points"}
+                      </span>
+                    </div>
+
+                    <progress
+                      value={rack.occupied}
+                      max={rack.total || 1}
+                      aria-label={`${rack.id} load occupancy`}
+                    />
+
+                    <small>
+                      {rack.available} available
+                      {" · "}
+                      {rack.reserved} reserved
+                      {" · "}
+                      {rack.blocked} blocked
+                    </small>
                   </div>
-
-                  <progress
-                    value={rack.occupied}
-                    max={rack.total || 1}
-                    aria-label={`${rack.id} load occupancy`}
-                  />
-
-                  <small>
-                    {rack.available} available
-                    {" · "}
-                    {rack.reserved} reserved
-                    {" · "}
-                    {rack.blocked} blocked
-                  </small>
-                </div>
-              ))}
+                ))}
+              </div>
             </section>
 
             <section className="panel overview-section">

@@ -1,8 +1,4 @@
-import {
-  useEffect,
-  useState,
-} from "react";
-
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import {
@@ -55,7 +51,7 @@ export default function TaskManagement() {
         source: operation.locationCode,
         destination: "Picking workflow",
         path: "/operations",
-      }),
+      })
     ),
 
     ...(snapshot?.queue || []).map((task) => ({
@@ -78,10 +74,7 @@ export default function TaskManagement() {
   const visible = rows
     .filter(
       (record) =>
-        (
-          filter === "ALL" ||
-          record.kind === filter
-        ) &&
+        (filter === "ALL" || record.kind === filter) &&
         [
           record.id,
           record.kind,
@@ -93,12 +86,12 @@ export default function TaskManagement() {
         ]
           .join(" ")
           .toLowerCase()
-          .includes(search.toLowerCase()),
+          .includes(search.toLowerCase())
     )
     .sort(
       (a, b) =>
         (Date.parse(b.createdAt) || 0) -
-        (Date.parse(a.createdAt) || 0),
+        (Date.parse(a.createdAt) || 0)
     );
 
   const closed = [
@@ -113,14 +106,14 @@ export default function TaskManagement() {
     [
       "Open",
       rows.filter(
-        (record) => !closed.includes(record.status),
+        (record) => !closed.includes(record.status)
       ).length,
     ],
 
     [
       "Completed",
       rows.filter(
-        (record) => record.status === "COMPLETED",
+        (record) => record.status === "COMPLETED"
       ).length,
     ],
 
@@ -131,13 +124,13 @@ export default function TaskManagement() {
           "FAILED",
           "NEEDS_ATTENTION",
           "OUTCOME_UNKNOWN",
-        ].includes(record.status),
+        ].includes(record.status)
       ).length,
     ],
   ];
 
   return (
-    <div className="page wms-overview">
+    <div className="page wms-overview workflow-view">
       <div className="page-header">
         <div>
           <span className="page-label">
@@ -153,9 +146,7 @@ export default function TaskManagement() {
         </div>
       </div>
 
-      {error && (
-        <p role="alert">{error}</p>
-      )}
+      {error && <p role="alert">{error}</p>}
 
       <div className="overview-stats">
         {stats.map(([label, value]) => (
@@ -184,7 +175,7 @@ export default function TaskManagement() {
           </Link>
         </div>
 
-        <div className="overview-form">
+        <div className="overview-form workflow-toolbar">
           <label>
             Task type
 
@@ -221,6 +212,28 @@ export default function TaskManagement() {
           </label>
         </div>
 
+        <div className="workflow-results">
+          <span role="status">
+            Showing {visible.length} of {rows.length} tasks
+          </span>
+
+          <button
+            type="button"
+            disabled={!search && filter === "ALL"}
+            onClick={() => {
+              setSearch("");
+              setFilter("ALL");
+            }}
+          >
+            Clear filters
+          </button>
+        </div>
+
+        <p className="workflow-note">
+          Summary cards include all tasks.
+          Open tasks may also need attention.
+        </p>
+
         <div className="table-wrapper">
           <table className="dashboard-table">
             <thead>
@@ -237,14 +250,26 @@ export default function TaskManagement() {
             <tbody>
               {!visible.length && (
                 <tr>
-                  <td colSpan={6}>No tasks.</td>
+                  <td
+                    colSpan={6}
+                    className="workflow-empty"
+                  >
+                    {rows.length
+                      ? "No tasks match your filters."
+                      : "No tasks yet. Create an operation in Monitor."}
+                  </td>
                 </tr>
               )}
 
               {visible.map((record) => (
                 <tr key={`${record.kind}-${record.id}`}>
                   <td>{record.id}</td>
-                  <td>{record.kind}</td>
+
+                  <td>
+                    {record.kind === "BASKET_TRANSFER"
+                      ? "Load transfer"
+                      : "Outbound picking"}
+                  </td>
 
                   <td>
                     {record.basketId || "—"}
@@ -256,7 +281,16 @@ export default function TaskManagement() {
                     {record.source} → {record.destination}
                   </td>
 
-                  <td>{record.status}</td>
+                  <td>
+                    <span
+                      className="workflow-status"
+                      data-status={record.status || "UNKNOWN"}
+                    >
+                      {String(
+                        record.status || "UNKNOWN"
+                      ).replaceAll("_", " ")}
+                    </span>
+                  </td>
 
                   <td>
                     <Link to={record.path}>

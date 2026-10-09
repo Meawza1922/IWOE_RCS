@@ -1,8 +1,4 @@
-import {
-  useEffect,
-  useState,
-} from "react";
-
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import {
@@ -53,7 +49,7 @@ export default function WarehouseOperations() {
     if (
       action === "COMPLETE" &&
       !window.confirm(
-        `Confirm that ${operation.quantity} ${operation.unit} of ${operation.sku} has actually been picked? This deducts stock.`,
+        `Confirm that ${operation.quantity} ${operation.unit} of ${operation.sku} has actually been picked? This deducts stock.`
       )
     ) {
       return;
@@ -67,7 +63,7 @@ export default function WarehouseOperations() {
           ? "Picking confirmed. Stock and reservation reduced."
           : action === "CANCEL"
             ? "Cancelled. Reserved stock released; quantity unchanged."
-            : "Picking started. Quantity unchanged.",
+            : "Picking started. Quantity unchanged."
       );
     } catch (error) {
       setMessage(error.message);
@@ -96,19 +92,19 @@ export default function WarehouseOperations() {
       ]
         .join(" ")
         .toLowerCase()
-        .includes(search.toLowerCase()),
+        .includes(search.toLowerCase())
     )
     .slice()
     .sort(
       (a, b) =>
         (Date.parse(b.createdAt) || 0) -
-        (Date.parse(a.createdAt) || 0),
+        (Date.parse(a.createdAt) || 0)
     );
 
   const legacyReservations = history.filter(
     (record) =>
       record.type === "OUTBOUND" &&
-      !record.operationId,
+      !record.operationId
   );
 
   const hasLegacyRecords =
@@ -117,7 +113,7 @@ export default function WarehouseOperations() {
     snapshot?.legacyOutbound.length > 0;
 
   return (
-    <div className="page wms-overview">
+    <div className="page wms-overview workflow-view">
       <div className="page-header">
         <div>
           <span className="page-label">
@@ -197,6 +193,20 @@ export default function WarehouseOperations() {
           />
         </label>
 
+        <div className="workflow-results">
+          <span role="status">
+            Showing {rows.length} records in this view
+          </span>
+
+          <button
+            type="button"
+            disabled={!search}
+            onClick={() => setSearch("")}
+          >
+            Clear search
+          </button>
+        </div>
+
         <div className="table-wrapper">
           <table className="dashboard-table">
             <thead>
@@ -216,8 +226,12 @@ export default function WarehouseOperations() {
             <tbody>
               {!rows.length && (
                 <tr>
-                  <td colSpan={tab === "OUTBOUND" ? 6 : 5}>
-                    No records.
+                  <td
+                    colSpan={tab === "OUTBOUND" ? 6 : 5}
+                  >
+                    {search
+                      ? "No records match your search."
+                      : "No records in this view yet."}
                   </td>
                 </tr>
               )}
@@ -228,7 +242,7 @@ export default function WarehouseOperations() {
                     {record.id}
                     <br />
                     {new Date(
-                      record.createdAt,
+                      record.createdAt
                     ).toLocaleString()}
                   </td>
 
@@ -249,7 +263,16 @@ export default function WarehouseOperations() {
                   </td>
 
                   <td>
-                    {record.status || "RECORDED"}
+                    <span
+                      className="workflow-status"
+                      data-status={
+                        record.status || "RECORDED"
+                      }
+                    >
+                      {String(
+                        record.status || "RECORDED"
+                      ).replaceAll("_", " ")}
+                    </span>
                   </td>
 
                   {tab === "OUTBOUND" && (

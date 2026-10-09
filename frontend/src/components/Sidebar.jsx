@@ -9,7 +9,7 @@ import {
   Warehouse,
 } from "lucide-react";
 
-import { NavLink } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 
 export default function Sidebar() {
   const menu = [
@@ -52,13 +52,13 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside className="sidebar">
+    <aside className="sidebar navigation-sidebar">
       <div className="sidebar-title">
         <Warehouse size={20} />
         <span>WMS</span>
       </div>
 
-      <nav>
+      <nav aria-label="Main navigation">
         {menu.map((item) => {
           const Icon = item.icon;
 
@@ -67,11 +67,13 @@ export default function Sidebar() {
               key={item.path}
               to={item.path}
               end={item.end}
+              title={item.name}
+              aria-label={item.name}
               className={({ isActive }) =>
                 `sidebar-link ${isActive ? "active" : ""}`
               }
             >
-              <Icon size={19} />
+              <Icon size={19} aria-hidden="true" />
               <span>{item.name}</span>
             </NavLink>
           );
@@ -79,11 +81,19 @@ export default function Sidebar() {
       </nav>
 
       <div className="sidebar-footer">
-        <div className="status-dot" />
-        <div>
-          <strong>System Ready</strong>
-          <span>WMS Core</span>
-        </div>
+        <Link
+          to="/settings"
+          className="sidebar-connection"
+          title="Check connections in Settings"
+          aria-label="Check connections in Settings"
+        >
+          <Settings size={18} aria-hidden="true" />
+
+          <span className="sidebar-connection-text">
+            <strong>Connection checks</strong>
+            <span>Open Settings</span>
+          </span>
+        </Link>
       </div>
     </aside>
   );

@@ -392,3 +392,136 @@
   }
 }
 
+/* Load type filters and readable data tables */
+
+.warehouse-data-page {
+  max-width: 1600px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.warehouse-data-title-row,
+.warehouse-data-tabs {
+  flex-wrap: wrap;
+}
+
+.warehouse-data-summary-card {
+  min-width: 0;
+}
+
+.warehouse-data-summary-icon {
+  flex-shrink: 0;
+}
+
+.warehouse-data-summary-card span {
+  font-size: 12px;
+}
+
+.warehouse-data-summary-card strong {
+  font-size: 26px;
+  font-weight: 600;
+}
+
+.warehouse-data-tabs button,
+.warehouse-data-monitor-button {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.warehouse-data-search input,
+.warehouse-data-table td {
+  font-size: 13px;
+}
+
+.warehouse-data-table th {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.warehouse-data-main-cell span,
+.warehouse-data-stock-list > span,
+.warehouse-data-location-tags span,
+.warehouse-data-status,
+.warehouse-data-capacity > div:first-child {
+  font-size: 12px;
+}
+
+.warehouse-data-filter-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 14px 17px 0;
+  font-size: 13px;
+}
+
+.warehouse-data-filter-bar label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.warehouse-data-filter-bar select,
+.warehouse-data-filter-bar button {
+  background: #0b1525;
+  color: #e2e8f0;
+  border: 1px solid #405570;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font: inherit;
+}
+
+.warehouse-data-filter-bar button {
+  cursor: pointer;
+  margin-left: auto;
+}
+
+.warehouse-data-filter-bar button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.warehouse-data-filter-note {
+  padding: 0 17px;
+  color: #a7bad0;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.warehouse-data-type-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.warehouse-data-type {
+  display: inline-block;
+  padding: 4px 8px;
+  border: 1px solid #405570;
+  border-radius: 5px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.warehouse-data-type.basket {
+  color: #67e8f9;
+  background: #10333f;
+  border-color: #26788b;
+}
+
+.warehouse-data-type.pallet {
+  color: #fde68a;
+  background: #342d19;
+  border-color: #856a2b;
+}
+
+.warehouse-data-type.rack {
+  color: #c4b5fd;
+  background: #2e244a;
+  border-color: #70559d;
+}
+
+.warehouse-data-page :focus-visible {
+  outline: 2px solid #22d3ee;
+  outline-offset: 3px;
+}

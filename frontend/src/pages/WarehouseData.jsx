@@ -1,12 +1,5 @@
-import {
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-
-import {
-  useNavigate,
-} from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import {
   Boxes,
@@ -38,11 +31,9 @@ export default function WarehouseData() {
     }
   });
 
-  const [activeTab, setActiveTab] = useState(
-    "INVENTORY"
-  );
-
+  const [activeTab, setActiveTab] = useState("INVENTORY");
   const [search, setSearch] = useState("");
+  const [loadTypeFilter, setLoadTypeFilter] = useState("ALL");
 
   const locations = useMemo(
     () =>
@@ -84,18 +75,12 @@ export default function WarehouseData() {
     ];
 
     events.forEach((eventName) => {
-      window.addEventListener(
-        eventName,
-        refresh
-      );
+      window.addEventListener(eventName, refresh);
     });
 
     return () => {
       events.forEach((eventName) => {
-        window.removeEventListener(
-          eventName,
-          refresh
-        );
+        window.removeEventListener(eventName, refresh);
       });
     };
   }, []);
@@ -180,21 +165,14 @@ export default function WarehouseData() {
           sku,
           totalQuantity,
           usedLocations,
-
           status: getStockStatus(
             totalQuantity,
             Number(master.minStock || 0)
           ),
         };
       })
-      .sort((a, b) =>
-        a.sku.localeCompare(b.sku)
-      );
-  }, [
-    inventory,
-    locationMap,
-    skuMasters,
-  ]);
+      .sort((a, b) => a.sku.localeCompare(b.sku));
+  }, [inventory, locationMap, skuMasters]);
 
   const locationRows = useMemo(() => {
     return locations
@@ -241,50 +219,55 @@ export default function WarehouseData() {
   const filteredInventoryRows = useMemo(() => {
     const query = search.trim().toLowerCase();
 
-    if (!query) {
-      return inventoryRows;
-    }
+    return inventoryRows.filter((row) => {
+      const matchesType =
+        loadTypeFilter === "ALL" ||
+        row.usedLocations.some(
+          (location) =>
+            location.loadType === loadTypeFilter
+        );
 
-    return inventoryRows.filter((row) =>
-      [
+      const matchesSearch = [
         row.sku,
         row.name,
         row.category,
         row.unit,
         row.status,
-
-        ...row.usedLocations.flatMap(
-          (location) => [
-            location.code,
-            location.zone,
-            location.rack,
-            location.level,
-          ]
-        ),
+        ...row.usedLocations.flatMap((location) => [
+          location.code,
+          location.zone,
+          location.rack,
+          location.level,
+          location.loadType,
+          location.basket?.id,
+        ]),
       ]
         .filter(Boolean)
         .join(" ")
         .toLowerCase()
-        .includes(query)
-    );
-  }, [inventoryRows, search]);
+        .includes(query);
+
+      return matchesType && matchesSearch;
+    });
+  }, [inventoryRows, search, loadTypeFilter]);
 
   const filteredLocationRows = useMemo(() => {
     const query = search.trim().toLowerCase();
 
-    if (!query) {
-      return locationRows;
-    }
+    return locationRows.filter((row) => {
+      const matchesType =
+        loadTypeFilter === "ALL" ||
+        row.loadType === loadTypeFilter;
 
-    return locationRows.filter((row) =>
-      [
+      const matchesSearch = [
         row.id,
         row.code,
         row.zone,
         row.rack,
         row.level,
         row.status,
-
+        row.loadType,
+        row.basket?.id,
         ...row.stock.flatMap((record) => [
           record.sku,
           record.name,
@@ -293,9 +276,11 @@ export default function WarehouseData() {
         .filter(Boolean)
         .join(" ")
         .toLowerCase()
-        .includes(query)
-    );
-  }, [locationRows, search]);
+        .includes(query);
+
+      return matchesType && matchesSearch;
+    });
+  }, [locationRows, search, loadTypeFilter]);
 
   const summary = useMemo(() => {
     const totalQuantity = inventory.reduce(
@@ -341,9 +326,7 @@ export default function WarehouseData() {
           </span>
 
           <div className="warehouse-data-title-row">
-            <h2>
-              Inventory &amp; Storage Data
-            </h2>
+            <h2>Inventory &amp; Storage Data</h2>
 
             <span className="warehouse-data-readonly-badge">
               READ ONLY
@@ -351,19 +334,17 @@ export default function WarehouseData() {
           </div>
 
           <p>
-            Read-only operational data generated
-            from Warehouse Monitor. Rack, shelf
-            and stock changes are managed from
-            the Warehouse Monitor page.
+            Read-only operational data generated from
+            Warehouse Monitor. Storage, load and stock
+            changes are managed from the Warehouse
+            Monitor page.
           </p>
         </div>
 
         <button
           type="button"
           className="warehouse-data-monitor-button"
-          onClick={() =>
-            navigate("/warehouse")
-          }
+          onClick={() => navigate("/warehouse")}
         >
           <MapPin size={17} />
           Open Warehouse Monitor
@@ -375,15 +356,15 @@ export default function WarehouseData() {
 
         <div>
           <strong>
-            Warehouse Monitor is the main source
-            of warehouse data.
+            Warehouse Monitor is the main source of
+            warehouse data.
           </strong>
 
           <span>
-            This page does not create, move, edit
-            or deduct stock. It only shows the
-            latest rack, shelf, SKU and quantity
-            information from Monitor.
+            This page does not create, move, edit or
+            deduct stock. It only shows the latest
+            storage, load, SKU and quantity information
+            from Monitor.
           </span>
         </div>
       </div>
@@ -391,7 +372,7 @@ export default function WarehouseData() {
       <div className="warehouse-data-summary-grid">
         <SummaryCard
           icon={<Package size={20} />}
-          title="SKU Types"
+          title="Catalog SKUs"
           value={summary.skuCount}
         />
 
@@ -403,19 +384,19 @@ export default function WarehouseData() {
 
         <SummaryCard
           icon={<Warehouse size={20} />}
-          title="Storage Racks"
+          title="Storage Groups"
           value={summary.rackCount}
         />
 
         <SummaryCard
           icon={<Layers3 size={20} />}
-          title="Shelf Locations"
+          title="Storage Points"
           value={summary.shelfCount}
         />
 
         <SummaryCard
           icon={<MapPin size={20} />}
-          title="Occupied Shelves"
+          title="Occupied Points"
           value={summary.occupiedShelves}
         />
       </div>
@@ -426,9 +407,7 @@ export default function WarehouseData() {
             <button
               type="button"
               className={
-                activeTab === "INVENTORY"
-                  ? "active"
-                  : ""
+                activeTab === "INVENTORY" ? "active" : ""
               }
               onClick={() => {
                 setActiveTab("INVENTORY");
@@ -441,9 +420,7 @@ export default function WarehouseData() {
             <button
               type="button"
               className={
-                activeTab === "LOCATIONS"
-                  ? "active"
-                  : ""
+                activeTab === "LOCATIONS" ? "active" : ""
               }
               onClick={() => {
                 setActiveTab("LOCATIONS");
@@ -459,38 +436,82 @@ export default function WarehouseData() {
 
             <input
               type="text"
+              aria-label="Search warehouse data"
               value={search}
               onChange={(event) =>
                 setSearch(event.target.value)
               }
               placeholder={
                 activeTab === "INVENTORY"
-                  ? "Search SKU, item or rack..."
-                  : "Search rack, shelf, location or SKU..."
+                  ? "Search SKU, item, load or location..."
+                  : "Search location, load or SKU..."
               }
             />
           </div>
         </div>
 
+        <div className="warehouse-data-filter-bar">
+          <label>
+            Load type
+
+            <select
+              value={loadTypeFilter}
+              onChange={(event) =>
+                setLoadTypeFilter(event.target.value)
+              }
+            >
+              <option value="ALL">All types</option>
+              <option value="BASKET">Basket</option>
+              <option value="PALLET">Pallet</option>
+              <option value="RACK">Rack</option>
+            </select>
+          </label>
+
+          <span role="status">
+            Showing{" "}
+            {activeTab === "INVENTORY"
+              ? filteredInventoryRows.length
+              : filteredLocationRows.length}
+            {" of "}
+            {activeTab === "INVENTORY"
+              ? inventoryRows.length
+              : locationRows.length}
+            {activeTab === "INVENTORY"
+              ? " SKUs"
+              : " locations"}
+          </span>
+
+          <button
+            type="button"
+            disabled={
+              !search && loadTypeFilter === "ALL"
+            }
+            onClick={() => {
+              setSearch("");
+              setLoadTypeFilter("ALL");
+            }}
+          >
+            Clear filters
+          </button>
+        </div>
+
+        <p className="warehouse-data-filter-note">
+          Summary cards show the whole warehouse.
+          {activeTab === "INVENTORY" &&
+            " The type filter selects SKUs stored in that load type. Quantities, locations and stock status remain warehouse totals. SKUs without a location appear under All types."}
+        </p>
+
         {activeTab === "INVENTORY" ? (
-          <InventoryTable
-            rows={filteredInventoryRows}
-          />
+          <InventoryTable rows={filteredInventoryRows} />
         ) : (
-          <LocationTable
-            rows={filteredLocationRows}
-          />
+          <LocationTable rows={filteredLocationRows} />
         )}
       </section>
     </div>
   );
 }
 
-function SummaryCard({
-  icon,
-  title,
-  value,
-}) {
+function SummaryCard({ icon, title, value }) {
   return (
     <div className="warehouse-data-summary-card">
       <div className="warehouse-data-summary-icon">
@@ -516,6 +537,7 @@ function InventoryTable({ rows }) {
             <th>Category</th>
             <th>Total Qty</th>
             <th>Unit</th>
+            <th>Load Types</th>
             <th>Storage Locations</th>
             <th>Status</th>
           </tr>
@@ -532,29 +554,42 @@ function InventoryTable({ rows }) {
               <td>{row.category || "-"}</td>
 
               <td>
-                <strong>
-                  {row.totalQuantity}
-                </strong>
+                <strong>{row.totalQuantity}</strong>
               </td>
 
               <td>{row.unit || "PCS"}</td>
 
               <td>
+                <div className="warehouse-data-type-list">
+                  {[
+                    ...new Set(
+                      row.usedLocations
+                        .map(
+                          (location) => location.loadType
+                        )
+                        .filter(Boolean)
+                    ),
+                  ].map((type) => (
+                    <LoadTypeBadge
+                      key={type}
+                      type={type}
+                    />
+                  ))}
+
+                  {row.usedLocations.length === 0 && "—"}
+                </div>
+              </td>
+
+              <td>
                 <div className="warehouse-data-location-tags">
                   {row.usedLocations.length > 0 ? (
-                    row.usedLocations.map(
-                      (location) => (
-                        <span
-                          key={
-                            location.id ||
-                            location.code
-                          }
-                        >
-                          {location.code ||
-                            location.id}
-                        </span>
-                      )
-                    )
+                    row.usedLocations.map((location) => (
+                      <span
+                        key={location.id || location.code}
+                      >
+                        {location.code || location.id}
+                      </span>
+                    ))
                   ) : (
                     <span className="empty">
                       No stock location
@@ -596,7 +631,8 @@ function LocationTable({ rows }) {
         <thead>
           <tr>
             <th>Location</th>
-            <th>Zone / Rack</th>
+            <th>Zone / Storage</th>
+            <th>Load Type</th>
             <th>Level</th>
             <th>Inventory</th>
             <th>Qty</th>
@@ -607,10 +643,7 @@ function LocationTable({ rows }) {
 
         <tbody>
           {rows.map((row) => {
-            const capacity = Number(
-              row.capacity || 0
-            );
-
+            const capacity = Number(row.capacity || 0);
             const used = row.basket ? 1 : 0;
 
             const percent =
@@ -619,9 +652,7 @@ function LocationTable({ rows }) {
                     0,
                     Math.min(
                       100,
-                      Math.round(
-                        (used / capacity) * 100
-                      )
+                      Math.round((used / capacity) * 100)
                     )
                   )
                 : 0;
@@ -630,29 +661,27 @@ function LocationTable({ rows }) {
               <tr key={row.id || row.code}>
                 <td>
                   <div className="warehouse-data-main-cell">
-                    <strong>
-                      {row.code || row.id}
-                    </strong>
-
-                    <span>
-                      {row.id || "-"}
-                    </span>
+                    <strong>{row.code || row.id}</strong>
+                    <span>{row.id || "-"}</span>
                   </div>
                 </td>
 
                 <td>
                   <div className="warehouse-data-main-cell">
-                    <strong>
-                      {row.zone || "-"}
-                    </strong>
-
-                    <span>
-                      {row.rack || "-"}
-                    </span>
+                    <strong>{row.zone || "-"}</strong>
+                    <span>{row.rack || "-"}</span>
                   </div>
                 </td>
 
-                <td>{row.level || "-"}</td>
+                <td>
+                  <LoadTypeBadge type={row.loadType} />
+                </td>
+
+                <td>
+                  {row.loadType === "RACK"
+                    ? "—"
+                    : row.level || "—"}
+                </td>
 
                 <td>
                   <div className="warehouse-data-stock-list">
@@ -664,9 +693,7 @@ function LocationTable({ rows }) {
                             `${record.sku}-${row.id}`
                           }
                         >
-                          <strong>
-                            {record.sku}
-                          </strong>
+                          <strong>{record.sku}</strong>
 
                           {record.name
                             ? ` · ${record.name}`
@@ -682,9 +709,7 @@ function LocationTable({ rows }) {
                 </td>
 
                 <td>
-                  <strong>
-                    {row.quantity}
-                  </strong>
+                  <strong>{row.quantity}</strong>
                 </td>
 
                 <td>
@@ -696,9 +721,7 @@ function LocationTable({ rows }) {
                         {used}
                       </span>
 
-                      <span>
-                        {capacity || "-"}
-                      </span>
+                      <span>{capacity || "-"}</span>
                     </div>
 
                     <div className="warehouse-data-capacity-track">
@@ -743,12 +766,27 @@ function getStockStatus(quantity, minStock) {
     return "Out of Stock";
   }
 
-  if (
-    minStock > 0 &&
-    quantity <= minStock
-  ) {
+  if (minStock > 0 && quantity <= minStock) {
     return "Low Stock";
   }
 
   return "In Stock";
+}
+
+function LoadTypeBadge({ type }) {
+  const names = {
+    BASKET: "Basket",
+    PALLET: "Pallet",
+    RACK: "Rack",
+  };
+
+  return (
+    <span
+      className={`warehouse-data-type ${String(
+        type || "unknown"
+      ).toLowerCase()}`}
+    >
+      {names[type] || "Unknown"}
+    </span>
+  );
 }

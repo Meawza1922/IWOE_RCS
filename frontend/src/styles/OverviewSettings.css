@@ -387,3 +387,282 @@
   min-width: 0;
   overflow-wrap: anywhere;
 }
+
+/* Task Management and Warehouse Operations */
+
+.workflow-view .overview-actions {
+  margin-bottom: 18px;
+}
+
+.workflow-view .overview-actions a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid #314760;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.workflow-view button {
+  border: 1px solid #405570;
+  border-radius: 6px;
+  padding: 9px 13px;
+  background: #142238;
+  color: #e2e8f0;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.workflow-view button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.workflow-view button[aria-pressed="true"] {
+  background: #0e7490;
+  border-color: #22d3ee;
+  color: #ffffff;
+}
+
+.workflow-view button[aria-pressed="false"] {
+  background: #0b1525;
+  color: #a7bad0;
+}
+
+.workflow-view .workflow-toolbar {
+  grid-template-columns:
+    minmax(180px, 1fr)
+    minmax(240px, 2fr);
+  margin-top: 18px;
+}
+
+.workflow-view .overview-search {
+  display: grid;
+  gap: 8px;
+  max-width: 620px;
+  margin: 18px 0;
+  font-size: 13px;
+}
+
+.workflow-view .overview-search input {
+  width: 100%;
+  box-sizing: border-box;
+  background: #07111f;
+  border: 1px solid #314760;
+  border-radius: 6px;
+  padding: 11px;
+  color: #e2e8f0;
+  font: inherit;
+}
+
+.workflow-view .workflow-results {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 16px 0;
+  color: #a7bad0;
+  font-size: 13px;
+}
+
+.workflow-view .workflow-note {
+  font-size: 12px;
+}
+
+.workflow-view .dashboard-table {
+  width: 100%;
+  min-width: 800px;
+  border-collapse: collapse;
+}
+
+.workflow-view .dashboard-table th {
+  padding: 12px 14px;
+  text-align: left;
+  background: #07111f;
+  color: #a7bad0;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.workflow-view .dashboard-table td {
+  padding: 14px;
+  border-bottom: 1px solid #21334b;
+  vertical-align: middle;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.workflow-view .dashboard-table tbody tr:hover {
+  background: #101f32;
+}
+
+.workflow-view .dashboard-table td button {
+  margin: 3px 6px 3px 0;
+}
+
+.workflow-view .workflow-empty {
+  text-align: center;
+  padding: 32px 14px;
+  color: #a7bad0;
+}
+
+.workflow-view .workflow-status {
+  display: inline-block;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: #273449;
+  color: #dbe4f0;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Completed and recorded */
+
+.workflow-view .workflow-status:is(
+  [data-status="COMPLETED"],
+  [data-status="RECORDED"]
+) {
+  background: #12352d;
+  color: #6ee7b7;
+}
+
+/* Waiting */
+
+.workflow-view .workflow-status:is(
+  [data-status="PENDING"],
+  [data-status="CREATED"],
+  [data-status="NOT_SENT"]
+) {
+  background: #342d19;
+  color: #fde68a;
+}
+
+/* In progress */
+
+.workflow-view .workflow-status:is(
+  [data-status="RUNNING"],
+  [data-status="IN_PROGRESS"],
+  [data-status="SENDING"]
+) {
+  background: #10333f;
+  color: #67e8f9;
+}
+
+/* Needs attention */
+
+.workflow-view .workflow-status:is(
+  [data-status="FAILED"],
+  [data-status="NEEDS_ATTENTION"],
+  [data-status="OUTCOME_UNKNOWN"]
+) {
+  background: #391d29;
+  color: #fda4af;
+}
+
+.workflow-view :focus-visible {
+  outline: 2px solid #22d3ee;
+  outline-offset: 3px;
+}
+
+@media (max-width: 700px) {
+  .workflow-view .workflow-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .workflow-view .overview-actions {
+    gap: 8px;
+  }
+}
+
+/* Dashboard storage list */
+
+.load-dashboard .dashboard-storage-list {
+  max-height: 520px;
+  overflow-y: auto;
+  padding-right: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: #405570 #07111f;
+}
+
+.load-dashboard .dashboard-storage-list:focus-visible {
+  outline: 2px solid #22d3ee;
+  outline-offset: 3px;
+}
+
+.load-dashboard .overview-rack {
+  --load-color: #22d3ee;
+
+  padding: 12px;
+  margin: 10px 0;
+  border: 1px solid #21334b;
+  border-left: 3px solid var(--load-color);
+  border-radius: 8px;
+  background: #0b1727;
+}
+
+.load-dashboard .overview-rack[data-load-type="PALLET"] {
+  --load-color: #fbbf24;
+}
+
+.load-dashboard .overview-rack[data-load-type="RACK"] {
+  --load-color: #a78bfa;
+}
+
+.load-dashboard .overview-rack .dashboard-type {
+  color: var(--load-color);
+  border-color: var(--load-color);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.load-dashboard .overview-rack progress::-webkit-progress-value {
+  background: var(--load-color);
+}
+
+.load-dashboard .overview-rack progress::-moz-progress-bar {
+  background: var(--load-color);
+}
+
+.load-dashboard .overview-rack > small {
+  display: block;
+  margin-top: 6px;
+}
+
+/* Recent transfers */
+
+.load-dashboard .dashboard-table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+}
+
+.load-dashboard .dashboard-table th {
+  padding: 12px 14px;
+  text-align: left;
+  color: #a7bad0;
+  background: #07111f;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.load-dashboard .dashboard-table td {
+  padding: 14px;
+  border-bottom: 1px solid #21334b;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.load-dashboard .dashboard-table tbody tr:hover {
+  background: #101f32;
+}
+
+@media (max-width: 600px) {
+  .load-dashboard .dashboard-storage-list {
+    max-height: 400px;
+  }
+}
